@@ -1,5 +1,7 @@
 <?php
 
+namespace Nilsimsa;
+
 /**
  * PHP Library to calculate and compare Nilsimsa digests.
  *
@@ -7,7 +9,7 @@
  * similar Nilsimsa digests. The Hamming distance between the digests can be used to approximate
  * the similarity between documents. For further information consult
  * http://en.wikipedia.org/wiki/Nilsimsa_Hash and the references (particularly Damiani et al.)
- * 
+ *
  * Implementation details:
  * The Nilsimsa class takes in a data parameter which is the string of the document to digest
  * Calling the methods hexdigest() and digest() give the nilsimsa digests in hex or array format.
@@ -113,6 +115,11 @@ class Nilsimsa {
      * @var array
      */
     private $window;
+
+    /**
+     * @var mixed
+     */
+    private $digest;
 
     /**
      * Constructor
@@ -236,7 +243,7 @@ class Nilsimsa {
         }
         return $output_str;
     }
-    
+
     /**
      * Loads a new instance from a file
      * @param  string   $fname The file name
