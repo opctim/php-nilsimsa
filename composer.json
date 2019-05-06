@@ -18,8 +18,8 @@
         "php": ">=5.6.0"
     },
     "autoload": {
-        "psr-0": {
-            "Nilsimsa": "src/"
+        "psr-4": {
+            "Nilsimsa\\": "src/"
         }
     }
 }
