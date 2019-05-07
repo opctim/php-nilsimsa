@@ -5,18 +5,21 @@ namespace Beager;
 /**
  * PHP Library to calculate and compare Nilsimsa digests.
  *
- * The Nilsimsa hash is a locality senstive hash function. Generally similar documents will have
- * similar Nilsimsa digests. The Hamming distance between the digests can be used to approximate
- * the similarity between documents. For further information consult
- * http://en.wikipedia.org/wiki/Nilsimsa_Hash and the references (particularly Damiani et al.)
+ * The Nilsimsa hash is a locality senstive hash function. Generally similar
+ * documents will have similar Nilsimsa digests. The Hamming distance between
+ * the digests can be used to approximate the similarity between documents. For
+ * further information consult http://en.wikipedia.org/wiki/Nilsimsa_Hash and
+ * the references (particularly Damiani et al.)
  *
  * Implementation details:
- * The Nilsimsa class takes in a data parameter which is the string of the document to digest
- * Calling the methods hexdigest() and digest() give the nilsimsa digests in hex or array format.
- * The helper function compare_digests takes in two digests and computes the Nilsimsa score.
- * You can also use compare_files() and compare_strings() to compare files and strings directly.
+ * The Nilsimsa class takes in a data parameter which is the string of the
+ * document to digest Calling the methods hexdigest() and digest() give the
+ * nilsimsa digests in hex or array format. The helper function compare_digests
+ * takes in two digests and computes the Nilsimsa score. You can also use
+ * compare_files() and compare_strings() to compare files and strings directly.
  *
- * This code is a port of py-nilsimsa located at https://code.google.com/p/py-nilsimsa/
+ * This code is a port of py-nilsimsa located at
+ * https://code.google.com/p/py-nilsimsa/
  */
 
 /**
@@ -25,7 +28,7 @@ namespace Beager;
  * Copyright (c) 2015 Bill Eager
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
+ * of this software and associated documentation files (the 'Software'), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
@@ -34,7 +37,7 @@ namespace Beager;
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -42,13 +45,13 @@ namespace Beager;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-class Nilsimsa {
-
+class Nilsimsa
+{
     /**
      * Tran53 hash constant
      * @var array
      */
-    private static $TRAN = [
+    const TRAN = [
         0x02,0xd6,0x9e,0x6f,0xf9,0x1d,0x04,0xab,0xd0,0x22,0x16,0x1f,0xd8,0x73,0xa1,0xac,
         0x3b,0x70,0x62,0x96,0x1e,0x6e,0x8f,0x39,0x9d,0x05,0x14,0x4a,0xa6,0xbe,0xae,0x0e,
         0xcf,0xb9,0x9c,0x9a,0xc7,0x68,0x13,0xe1,0x2d,0xa4,0xeb,0x51,0x8d,0x64,0x6b,0x50,
@@ -73,7 +76,7 @@ class Nilsimsa {
      * POPC[a ^b] = hamming distance from a to b
      * @var array
      */
-    private static $POPC = [
+    const POPC = [
         0x00,0x01,0x01,0x02,0x01,0x02,0x02,0x03,0x01,0x02,0x02,0x03,0x02,0x03,0x03,0x04,
         0x01,0x02,0x02,0x03,0x02,0x03,0x03,0x04,0x02,0x03,0x03,0x04,0x03,0x04,0x04,0x05,
         0x01,0x02,0x02,0x03,0x02,0x03,0x03,0x04,0x02,0x03,0x03,0x04,0x03,0x04,0x04,0x05,
@@ -94,24 +97,28 @@ class Nilsimsa {
 
     /**
      * Stores whether the digest is complete
+     *
      * @var boolean
      */
-    private $complete;
+    private $digestComputed;
 
     /**
      * Stores the number of characters in the string digested
+     *
      * @var int
      */
-    private $num_char;
+    private $numChar;
 
     /**
      * Stores the accumulator as a 256-bit vector
+     *
      * @var array
      */
     private $acc;
 
     /**
      * Stores the active window used in {process} for hashing
+     *
      * @var array
      */
     private $window;
@@ -123,13 +130,15 @@ class Nilsimsa {
 
     /**
      * Constructor
+     *
      * @param string $data The data to process
      */
-    public function __construct($data = null) {
-        $this->complete = false;
-        $this->num_char = 0;
-        $this->acc = array_fill(0, 256, 0);
-        $this->window = [];
+    public function __construct($data = null)
+    {
+        $this->digestComputed = false;
+        $this->numChar        = 0;
+        $this->acc            = array_fill(0, 256, 0);
+        $this->window         = [];
 
         if ($data) {
             $this->process($data);
@@ -137,74 +146,258 @@ class Nilsimsa {
     }
 
     /**
-     * Implementation of the Tran53 hash algorithm
-     * @param  int $a Input A
-     * @param  int $b Input B
-     * @param  int $c Input C
-     * @param  int $n Input N
+     * Computes the hash of all of the trigrams in the chunk using a window of
+     * length 5
+     *
+     * @param string $chunk The chunk to process
      */
-    function tran_hash($a, $b, $c, $n) {
-        return (((self::$TRAN[($a+$n)&255]^self::$TRAN[$b]*($n+$n+1))+self::$TRAN[($c)^self::$TRAN[$n]])&255);
-    }
+    protected function process($chunk)
+    {
+        foreach (str_split($chunk) as $char) {
+            $this->numChar++;
+            $c             = ord($char);
+            $windowLength = count($this->window);
 
-    /**
-     * Computes the hash of all of the trigrams in the chunk using a window of length 5
-     * @param  string $chunk The chunk to process
-     */
-    function process($chunk) {
-        foreach(str_split($chunk) as $char) {
-            $this->num_char++;
-            $c = ord($char);
-            $window_length = count($this->window);
-
-            if ($window_length > 1) {
+            if ($windowLength > 1) {
                 // seen at least three characters
-                $this->acc[$this->tran_hash($c, $this->window[0], $this->window[1], 0)] += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[0], $this->window[1], 0
+                )]
+                    += 1;
             }
-            if ($window_length > 2) {
+            if ($windowLength > 2) {
                 // seen at least four characters
-                $this->acc[$this->tran_hash($c, $this->window[0], $this->window[2], 1)] += 1;
-                $this->acc[$this->tran_hash($c, $this->window[1], $this->window[2], 2)] += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[0], $this->window[2], 1
+                )]
+                    += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[1], $this->window[2], 2
+                )]
+                    += 1;
             }
-            if ($window_length > 3) {
+            if ($windowLength > 3) {
                 // have a full window
-                $this->acc[$this->tran_hash($c, $this->window[0], $this->window[3], 3)] += 1;
-                $this->acc[$this->tran_hash($c, $this->window[1], $this->window[3], 4)] += 1;
-                $this->acc[$this->tran_hash($c, $this->window[2], $this->window[3], 5)] += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[0], $this->window[3], 3
+                )]
+                    += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[1], $this->window[3], 4
+                )]
+                    += 1;
+                $this->acc[$this->tranHash(
+                    $c, $this->window[2], $this->window[3], 5
+                )]
+                    += 1;
                 // duplicate hashes, used to maintain 8 trigrams per character
-                $this->acc[$this->tran_hash($this->window[3], $this->window[0], $c, 6)] += 1;
-                $this->acc[$this->tran_hash($this->window[3], $this->window[2], $c, 7)] += 1;
+                $this->acc[$this->tranHash(
+                    $this->window[3], $this->window[0], $c, 6
+                )]
+                    += 1;
+                $this->acc[$this->tranHash(
+                    $this->window[3], $this->window[2], $c, 7
+                )]
+                    += 1;
             }
 
             // add current character to the window, remove the previous character
             array_unshift($this->window, $c);
 
-            if ($window_length >= 4) {
+            if ($windowLength >= 4) {
                 $this->window = array_slice($this->window, 0, 4);
             }
         }
     }
 
     /**
-     * Using a threshold (mean of the accumulator), computes the nilsimsa digest after completion.
-     * Sets complete flag to true and stores result in $this->digest
+     * Implementation of the Tran53 hash algorithm
+     *
+     * @param int $a Input A
+     * @param int $b Input B
+     * @param int $c Input C
+     * @param int $n Input N
+     *
+     * @return int
      */
-    function compute_digest() {
-        $num_trigrams = 0;
-        if ($this->num_char == 3) {
-            // 3 chars -> 1 trigram
-            $num_trigrams = 1;
-        } elseif ($this->num_char == 4){
-            // 4 chars -> 4 trigrams
-            $num_trigrams = 4;
-        } elseif ($this->num_char > 4) {
-            // > 4 chars -> 8 for each char
-            $num_trigrams = 8 * $this->num_char - 28;
+    protected function tranHash($a, $b, $c, $n)
+    {
+        return ((
+            (self::TRAN[($a + $n) & 255] ^ self::TRAN[$b] * ($n + $n + 1)) +
+             self::TRAN[($c) ^ self::TRAN[$n]]
+        ) & 255);
+    }
+
+    /**
+     * Convenience function to compare two files' contents and return the
+     * similarity
+     *
+     * @param string $file1 The first file path
+     * @param string $file2 The second file path
+     *
+     * @return int        Returns the similarity, from -128 (not similar) to
+     *                    128 (most similar)
+     */
+    public static function compareFiles($file1, $file2)
+    {
+        $nilsimsa1 = self::fromFile($file1);
+        $nilsimsa2 = self::fromFile($file2);
+
+        return self::compareDigests(
+            $nilsimsa1->hexDigest(), $nilsimsa2->hexDigest()
+        );
+    }
+
+    /**
+     * Loads a new instance from a file
+     *
+     * @param string $fname The file name
+     *
+     * @return Nilsimsa        Returns an instance of this class
+     */
+    public static function fromFile($fname)
+    {
+        $f    = fopen($fname, 'r');
+        $data = fread($f, filesize($fname));
+        fclose($f);
+        return new Nilsimsa($data);
+    }
+
+    /**
+     * Compares two digests and returns their similarity, between -128 and 128
+     * inclusive
+     *
+     * @param mixed   $digest1  The first digest, array or hex string
+     * @param mixed   $digest2  The second digest, array or hex string
+     * @param boolean $is_hex_1 Whether the first digest is hex
+     * @param boolean $is_hex_2 Whether the second digest is hex
+     *
+     * @return int               Returns the similarity, from -128 (not
+     *                           similar) to 128 (most similar)
+     */
+    public static function compareDigests(
+        $digest1, $digest2, $is_hex_1 = true, $is_hex_2 = true
+    ) {
+        if ($is_hex_1 && $is_hex_2) {
+            $bits = 0;
+            for ($i = 0; $i < 63; $i += 2) {
+                $bits += self::POPC[255 & hexdec(substr($digest1, $i, 2))
+                ^ hexdec(substr($digest2, $i, 2))];
+            }
+            return 128 - $bits;
+        } else {
+            if ($is_hex_1) {
+                $digest1 = self::convertHexDigestToArray($digest1);
+            }
+            if ($is_hex_2) {
+                $digest2 = self::convertHexDigestToArray($digest2);
+            }
+            $bitDiff        = 0;
+            $digest1length = count($digest1);
+            for ($i = 0; $i < $digest1length; $i++) {
+                $bitDiff += self::POPC[255 & $digest1[$i] & $digest2[$i]];
+            }
+            return 128 - $bitDiff;
         }
-        # threshhold is the mean of the acc buckets
-        $threshold = $num_trigrams / 256.0;
+    }
+
+    /**
+     * Convenience function to convert a hex digest into an array. Used by
+     * {compare_digests}
+     *
+     * @param string $digest The digest
+     *
+     * @return array          The digest as an array of ints
+     */
+    private static function convertHexDigestToArray($digest)
+    {
+        $result = [];
+
+        for ($i = 0; $i < 63; $i += 2) {
+            $result[] = hexdec(substr($digest, $i, 2));
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns the digest as a hex string. Computes it if it isn't computed
+     * already.
+     *
+     * @return string The digest
+     */
+    protected function hexDigest()
+    {
+        if ( ! $this->digestComputed) {
+            $this->computeDigest();
+        }
+
+        $output = null;
+
+        foreach ($this->digest as $i) {
+            $output .= sprintf('%02x', $i);
+        }
+        return $output;
+    }
+
+    /**
+     * Convenience function to compare two strings and return the similarity
+     *
+     * @param string $string1 The first string
+     * @param string $string2 The second string
+     *
+     * @return int        Returns the similarity, from -128 (not similar) to
+     *                    128 (most similar)
+     */
+    public static function compareStrings($string1, $string2)
+    {
+        $nilsimsa1 = new self($string1);
+        $nilsimsa2 = new self($string2);
+
+        return self::compareDigests($nilsimsa1->hexDigest(), $nilsimsa2->hexDigest());
+    }
+
+    /**
+     * Returns the digest as an array. Computes it if it isn't computed already.
+     *
+     * @return array The digest
+     */
+    protected function digest()
+    {
+        if ( ! $this->digestComputed) {
+            $this->computeDigest();
+        }
+
+        return $this->digest;
+    }
+
+    /**
+     * Using a threshold (mean of the accumulator), computes the nilsimsa
+     * digest after completion. Sets complete flag to true and stores result in
+     * $this->digest
+     */
+    protected function computeDigest()
+    {
+        $numTrigrams = 0;
+
+        if ($this->numChar == 3) {
+            // 3 chars -> 1 trigram
+            $numTrigrams = 1;
+        }
+        else if ($this->numChar == 4) {
+            // 4 chars -> 4 trigrams
+            $numTrigrams = 4;
+        }
+        else if ($this->numChar > 4) {
+            // > 4 chars -> 8 for each CHAR
+            $numTrigrams = 8 * $this->numChar - 28;
+        }
+
+        // threshhold is the mean of the acc buckets
+        $threshold = $numTrigrams / 256.0;
 
         $digest = array_fill(0, 32, 0);
+
         for ($i = 0; $i < 255; $i++) {
             if ($this->acc[$i] > $threshold) {
                 // equivalent to i/8, 2**(i mod 7)
@@ -213,114 +406,8 @@ class Nilsimsa {
         }
 
         // set flag to true
-        $this->complete = true;
+        $this->digestComputed = true;
         // store result in digest, reversed
         $this->digest = array_reverse($digest);
-    }
-
-    /**
-     * Returns the digest as an array. Computes it if it isn't computed already.
-     * @return array The digest
-     */
-    function digest() {
-        if (!$this->complete) {
-            $this->compute_digest();
-        }
-        return $this->digest;
-    }
-
-    /**
-     * Returns the digest as a hex string. Computes it if it isn't computed already.
-     * @return string The digest
-     */
-    function hexdigest() {
-        if (!$this->complete) {
-            $this->compute_digest();
-        }
-        $output_str = '';
-        foreach($this->digest as $i) {
-            $output_str .= sprintf('%02x', $i);
-        }
-        return $output_str;
-    }
-
-    /**
-     * Loads a new instance from a file
-     * @param  string   $fname The file name
-     * @return Nilsimsa        Returns an instance of this class
-     */
-    public static function from_file($fname) {
-        $f = fopen($fname, "r");
-        $data = fread($f, filesize($fname));
-        fclose($f);
-        return new Nilsimsa($data);
-    }
-
-    /**
-     * Convenience function to convert a hex digest into an array. Used by {compare_digests}
-     * @param  string $digest The digest
-     * @return array          The digest as an array of ints
-     */
-    private static function convert_hex_digest_to_array($digest) {
-        $array = [];
-        for($i = 0; $i < 63; $i+=2) {
-            $array[] = hexdec(substr($digest, $i, 2));
-        }
-        return $array;
-    }
-
-    /**
-     * Compares two digests and returns their similarity, between -128 and 128 inclusive
-     * @param  mixed   $digest_1 The first digest, array or hex string
-     * @param  mixed   $digest_2 The second digest, array or hex string
-     * @param  boolean $is_hex_1 Whether the first digest is hex
-     * @param  boolean $is_hex_2 Whether the second digest is hex
-     * @return int               Returns the similarity, from -128 (not similar) to 128 (most similar)
-     */
-    public static function compare_digests($digest_1, $digest_2, $is_hex_1 = true, $is_hex_2 = true) {
-        if ($is_hex_1 && $is_hex_2) {
-            $bits = 0;
-            for ($i = 0; $i < 63; $i+=2) {
-                $bits += self::$POPC[255 & hexdec(substr($digest_1, $i, 2)) ^ hexdec(substr($digest_2, $i, 2))];
-            }
-            return 128 - $bits;
-        } else {
-            if ($is_hex_1) {
-                $digest_1 = self::convert_hex_digest_to_array($digest_1);
-            }
-            if ($is_hex_2) {
-                $digest_2 = self::convert_hex_digest_to_array($digest_2);
-            }
-            $bit_diff = 0;
-            $digest_1_length = count($digest_1);
-            for ($i = 0; $i < $digest_1_length; $i++) {
-                $bit_diff += self::$POPC[255 & $digest_1[$i] & $digest_2[$i]];
-            }
-            return 128 - $bit_diff;
-        }
-    }
-
-    /**
-     * Convenience function to compare two files' contents and return the similarity
-     * @param  string $f1 The first file path
-     * @param  string $f2 The second file path
-     * @return int        Returns the similarity, from -128 (not similar) to 128 (most similar)
-     */
-    public static function compare_files($f1, $f2) {
-        $n1 = self::from_file($f1);
-        $n2 = self::from_file($f2);
-        return self::compare_digests($n1->hexdigest(), $n2->hexdigest());
-    }
-
-    /**
-     * Convenience function to compare two strings and return the similarity
-     * @param  string $s1 The first string
-     * @param  string $s2 The second string
-     * @return int        Returns the similarity, from -128 (not similar) to 128 (most similar)
-     */
-    public static function compare_strings($s1, $s2) {
-        $n1 = new self($s1);
-        $n2 = new self($s2);
-        return self::compare_digests($n1->hexdigest(), $n2->hexdigest());
     }
 }
