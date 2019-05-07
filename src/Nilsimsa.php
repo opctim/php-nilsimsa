@@ -1,6 +1,6 @@
 <?php
 
-namespace Nilsimsa;
+namespace Beager;
 
 /**
  * PHP Library to calculate and compare Nilsimsa digests.
