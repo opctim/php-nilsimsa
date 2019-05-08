@@ -151,7 +151,7 @@ class Nilsimsa
      *
      * @param string $chunk The chunk to process
      */
-    protected function process($chunk)
+    public function process($chunk)
     {
         foreach (str_split($chunk) as $char) {
             $this->numChar++;
@@ -220,7 +220,7 @@ class Nilsimsa
      *
      * @return int
      */
-    protected function tranHash($a, $b, $c, $n)
+    public function tranHash($a, $b, $c, $n)
     {
         return ((
             (self::TRAN[($a + $n) & 255] ^ self::TRAN[$b] * ($n + $n + 1)) +
@@ -326,7 +326,7 @@ class Nilsimsa
      *
      * @return string The digest
      */
-    protected function hexDigest()
+    public function hexDigest()
     {
         if ( ! $this->digestComputed) {
             $this->computeDigest();
@@ -362,7 +362,7 @@ class Nilsimsa
      *
      * @return array The digest
      */
-    protected function digest()
+    public function digest()
     {
         if ( ! $this->digestComputed) {
             $this->computeDigest();
@@ -376,7 +376,7 @@ class Nilsimsa
      * digest after completion. Sets complete flag to true and stores result in
      * $this->digest
      */
-    protected function computeDigest()
+    public function computeDigest()
     {
         $numTrigrams = 0;
 
