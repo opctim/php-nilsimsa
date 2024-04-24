@@ -1,3 +1,5 @@
+[![Latest Stable Version](http://poser.pugx.org/opctim/php-nilsimsa/v)](https://packagist.org/packages/opctim/php-nilsimsa) [![Total Downloads](http://poser.pugx.org/opctim/php-nilsimsa/downloads)](https://packagist.org/packages/opctim/php-nilsimsa) [![Latest Unstable Version](http://poser.pugx.org/opctim/php-nilsimsa/v/unstable)](https://packagist.org/packages/opctim/php-nilsimsa) [![License](http://poser.pugx.org/opctim/php-nilsimsa/license)](https://packagist.org/packages/opctim/php-nilsimsa) [![PHP Version Require](http://poser.pugx.org/opctim/php-nilsimsa/require/php)](https://packagist.org/packages/opctim/php-nilsimsa)
+
 # php-nilsimsa
 
 
